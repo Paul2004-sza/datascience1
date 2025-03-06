@@ -39,7 +39,6 @@ class TravelTechAnalysis:
         query = "SELECT * FROM Bookings;"
         df = pd.read_sql(query, self.engine)
 
-        # Convert dates and handle missing values
         for col in ['travel_date', 'booking_date']:
             if col in df.columns:
                 df[col] = pd.to_datetime(df[col], errors='coerce')
@@ -47,9 +46,9 @@ class TravelTechAnalysis:
         if 'booking_date' in df.columns and 'travel_date' in df.columns:
             df['days_between_booking_travel'] = (df['travel_date'] - df['booking_date']).dt.days
         else:
-            df['days_between_booking_travel'] = None  # Avoid KeyError
+            df['days_between_booking_travel'] = None
 
-        # Drop any rows with missing target (price)
+
         df = df.dropna(subset=['price'])
 
         print(f"✅ Data loaded: {df.shape[0]} rows, {df.shape[1]} columns")
@@ -61,13 +60,12 @@ class TravelTechAnalysis:
         self.df.describe().to_csv('data_summary.csv')
         print("✅ Data summary saved to 'data_summary.csv'")
 
-        # Histogram for price distribution
+
         fig = pe.histogram(self.df, x='price', nbins=30, marginal="box", title='Price Distribution of Bookings',
                            color_discrete_sequence=['blue'])
         fig.update_layout(xaxis_title='Price', yaxis_title='Count', template='plotly_dark', bargap=0.2)
         fig.show()
 
-        # Price over time
         if 'travel_date' in self.df.columns:
             df_sorted = self.df.sort_values(by='travel_date')
             fig = pe.line(df_sorted, x='travel_date', y='price', title='Booking Prices Over Time', markers=True,
@@ -75,7 +73,6 @@ class TravelTechAnalysis:
             fig.update_layout(xaxis_title='Travel Date', yaxis_title='Price', template='plotly_dark')
             fig.show()
 
-        # Impact of booking lead time on price
         if 'days_between_booking_travel' in self.df.columns and self.df['days_between_booking_travel'].notnull().all():
             fig = pe.box(self.df, x='days_between_booking_travel', y='price', title='Impact of Booking Time on Price',
                          color='days_between_booking_travel', color_continuous_scale='blues')
@@ -89,7 +86,7 @@ class TravelTechAnalysis:
         if 'days_between_booking_travel' in self.df.columns:
             features.append('days_between_booking_travel')
 
-        X = self.df[features].fillna(0) # Fill missing values with zero
+        X = self.df[features].fillna(0)
         y = self.df['price'].fillna(0)
 
         return train_test_split(X, y, test_size=0.2, random_state=42)
@@ -99,8 +96,8 @@ class TravelTechAnalysis:
         X_train, X_test, y_train, y_test = self.prepare_data()
 
         pipeline = Pipeline([
-            ('scaler', StandardScaler()),  # Normalize features
-            ('model', model)  # Apply model
+            ('scaler', StandardScaler()),
+            ('model', model)
         ])
 
         pipeline.fit(X_train, y_train)
@@ -119,7 +116,7 @@ class TravelTechAnalysis:
 
         print(f"✅ {model_name} Results:\nMSE: {mse:.2f}, R²: {r2:.2f}\n")
 
-        # Save predictions to CSV
+
         results_df = pd.DataFrame({
             'Actual Price': y_test.values,
             'Predicted Price': y_pred,
@@ -128,7 +125,7 @@ class TravelTechAnalysis:
         results_df.to_csv(f'{model_name}_predictions.csv', index=False)
         print(f"✅ Predictions saved for {model_name} in '{model_name}_predictions.csv'.")
 
-        # Save MSE and R2 score
+
         summary_df = pd.DataFrame({'Model': [model_name], 'MSE': [mse], 'R2': [r2]})
         summary_df.to_csv(f'{model_name}_summary.csv', index=False)
         print(f"✅ Model summary saved for {model_name} in '{model_name}_summary.csv'.")
