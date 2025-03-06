@@ -58,6 +58,8 @@ class TravelTechAnalysis:
     def exploratory_data_analysis(self):
         """Performs basic exploratory data analysis and visualization."""
         print(self.df.describe())
+        self.df.describe().to_csv('data_summary.csv')
+        print("✅ Data summary saved to 'data_summary.csv'")
 
         # Histogram for price distribution
         fig = pe.histogram(self.df, x='price', nbins=30, marginal="box", title='Price Distribution of Bookings',
@@ -116,6 +118,20 @@ class TravelTechAnalysis:
         }
 
         print(f"✅ {model_name} Results:\nMSE: {mse:.2f}, R²: {r2:.2f}\n")
+
+        # Save predictions to CSV
+        results_df = pd.DataFrame({
+            'Actual Price': y_test.values,
+            'Predicted Price': y_pred,
+            'Model': model_name
+        })
+        results_df.to_csv(f'{model_name}_predictions.csv', index=False)
+        print(f"✅ Predictions saved for {model_name} in '{model_name}_predictions.csv'.")
+
+        # Save MSE and R2 score
+        summary_df = pd.DataFrame({'Model': [model_name], 'MSE': [mse], 'R2': [r2]})
+        summary_df.to_csv(f'{model_name}_summary.csv', index=False)
+        print(f"✅ Model summary saved for {model_name} in '{model_name}_summary.csv'.")
 
     def compare_models(self):
         """Compares model predictions using scatter plots."""
